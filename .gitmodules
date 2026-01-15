@@ -1,0 +1,3 @@
+[submodule "cansat_autogyro"]
+	path = cansat_autogyro
+	url = git@github.com:EvanRJenkins/cansat_autogyro.git
