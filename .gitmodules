@@ -1,0 +1,3 @@
+[submodule "CANSAT"]
+	path = CANSAT
+	url = https://github.com/msalvatierra-2021150/CANSAT.git
