@@ -11,8 +11,8 @@
 #include "esp_log.h"
 
 // --- RadioLib Includes ---
-// #include <RadioLib.h>
-// #include "EspHal.h"
+#include <RadioLib.h>
+#include "EspHal/EspHal.h"
 
 // // --- Sensor Includes ---
 #include "gps_speed/2d_velocity.h"
@@ -44,21 +44,20 @@ Data transmittedData;
 #define SDA_GPIO       8
 #define SCL_GPIO       9
 
-// LoRa Pins (SX1276)
-#define LORA_SCK       18
-#define LORA_MISO      19
-#define LORA_MOSI      23
-#define LORA_CS        5
+// LoRa Pins (SX1276) - ESP32-S3 
+#define LORA_SCK       12
+#define LORA_MISO      13
+#define LORA_MOSI      11
+#define LORA_CS        10
 #define LORA_RST       14
-#define LORA_DIO0      26  // G0
-#define LORA_DIO1      33  // G1
+#define LORA_DIO0      15
+#define LORA_DIO1      16
 
 // ===================== LOGGING TAGS =====================
 
 static const char *TAG_MAIN  = "MAIN";
 static const char *TAG_BARO  = "BARO";
 static const char *TAG_GPS   = "GPS";
-static const char *TAG_SCD41 = "SCD41";
 static const char *TAG_LORA  = "LORA";
 static const char *TAG_IMU   = "IMU";
 static const char *TAG_TMP   = "TMP";
@@ -79,75 +78,89 @@ static void i2c_init(void) {
     ESP_ERROR_CHECK(i2c_driver_install(I2C_PORT, c.mode, 0, 0, 0));
 }
 
-// // ===================== LORA TASK =====================
+// ===================== LORA TASK =====================
 
-// static void lora_task(void *arg) {
-//     ESP_LOGI(TAG_LORA, "Setting up LoRa Hardware...");
+static void lora_task(void *arg) {
+    ESP_LOGI(TAG_LORA, "Setting up LoRa Hardware...");
 
-//     // 1. Initialize HAL (SPI)
-//     EspHal* hal = new EspHal(LORA_SCK, LORA_MISO, LORA_MOSI);
+    // 1. Initialize HAL (SPI)
+    EspHal* hal = new EspHal(LORA_SCK, LORA_MISO, LORA_MOSI);
 
-//     // 2. Initialize Radio Module
-//     // Note: We use 'new' to allocate on the heap and pass the HAL
-//     SX1276* radio = new SX1276(new Module(hal, LORA_CS, LORA_DIO0, LORA_RST, LORA_DIO1));
+    // 2. Initialize Radio Module
+    // Note: We use 'new' to allocate on the heap and pass the HAL
+    SX1276* radio = new SX1276(new Module(hal, LORA_CS, LORA_DIO0, LORA_RST, LORA_DIO1));
 
-//     // 3. Begin Radio
-//     ESP_LOGI(TAG_LORA, "[SX1276] Initializing ...");
-//     int state = radio->begin();
+    // 3. Begin Radio
+    ESP_LOGI(TAG_LORA, "[SX1276] Initializing ...");
+    hal->pinMode(LORA_CS, OUTPUT);
+    hal->digitalWrite(LORA_CS, HIGH);
+
+    auto sxRead = [&](uint8_t reg) -> uint8_t {
+    hal->digitalWrite(LORA_CS, LOW);
+    hal->spiTransferByte(reg & 0x7F);      // read
+    uint8_t v = hal->spiTransferByte(0x00);
+    hal->digitalWrite(LORA_CS, HIGH);
+    return v;
+    };
+
+    uint8_t ver = sxRead(0x42);
+    ESP_LOGI(TAG_LORA, "SX127x RegVersion=0x%02X (expected 0x12)", ver);
+
+    int state = radio->begin();
     
-//     if (state != RADIOLIB_ERR_NONE) {
-//         ESP_LOGE(TAG_LORA, "radio->begin() failed, code %d", state);
-//         // If radio fails, we delete the task or loop indefinitely
-//         while (true) {
-//             vTaskDelay(pdMS_TO_TICKS(1000));
-//         }
-//     }
-//     ESP_LOGI(TAG_LORA, "radio->begin() success!");
+    if (state != RADIOLIB_ERR_NONE) {
+        ESP_LOGE(TAG_LORA, "radio->begin() failed, code %d", state);
+        // If radio fails, we delete the task or loop indefinitely
+        while (true) {
+            vTaskDelay(pdMS_TO_TICKS(1000));
+        }
+    }
+    ESP_LOGI(TAG_LORA, "radio->begin() success!");
 
-//     // Buffer for the JSON string
-//     char tx_buffer[256];
-//     // 4. Transmission Loop
-//     while (1) {
-//     // 1. Create a local copy of data to minimize mutex holding time
-//         Data localData;
+    // Buffer for the JSON string
+    char tx_buffer[256];
+    // 4. Transmission Loop
+    while (1) {
+    // 1. Create a local copy of data to minimize mutex holding time
+        Data localData;
         
-//         // Take Mutex
-//         if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE) {
-//             localData = transmittedData; // Copy global to local
-//             xSemaphoreGive(dataMutex);   // Release Mutex
-//         }
+        // Take Mutex
+        if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE) {
+            localData = transmittedData; // Copy global to local
+            xSemaphoreGive(dataMutex);   // Release Mutex
+        }
 
-//         // 2. Format as JSON (Matching your Receiver's keys!)
-//         // Keys: ax, ay, az, gx, gy, gz, press, alt, co2, vx, vy
-//         snprintf(tx_buffer, sizeof(tx_buffer), 
-//     "{\"ax\":%.2f,\"ay\":%.2f,\"az\":%.2f,"
-//     "\"gx\":%.2f,\"gy\":%.2f,\"gz\":%.2f,"
-//     "\"press\":%.2f,\"alt\":%.2f,\"co2\":%d,"
-//     "\"temp\":%.2f,"
-//     "\"vx\":%.2f,\"vy\":%.2f}",
-//     localData.accelX, localData.accelY, localData.accelZ,
-//     localData.gyroX, localData.gyroY, localData.gyroZ,
-//     localData.pressure, localData.altitude, localData.co_2,
-//     localData.temp, localData.velocityX, localData.velocityY
-// );
+        // 2. Format as JSON (Matching your Receiver's keys!)
+        // Keys: ax, ay, az, gx, gy, gz, press, alt, vx, vy
+        snprintf(tx_buffer, sizeof(tx_buffer), 
+    "{\"ax\":%.2f,\"ay\":%.2f,\"az\":%.2f,"
+    "\"gx\":%.2f,\"gy\":%.2f,\"gz\":%.2f,"
+    "\"press\":%.2f,\"alt\":%.2f,"
+    "\"temp\":%.2f,"
+    "\"vx\":%.2f,\"vy\":%.2f}",
+    localData.accelX, localData.accelY, localData.accelZ,
+    localData.gyroX, localData.gyroY, localData.gyroZ,
+    localData.pressure, localData.altitude,
+    localData.temp, localData.velocityX, localData.velocityY
+);
 
-//         ESP_LOGI(TAG_LORA, "Sending: %s", tx_buffer);
+        ESP_LOGI(TAG_LORA, "Sending: %s", tx_buffer);
 
-//         // 3. Transmit
-//         state = radio->transmit(tx_buffer);
+        // 3. Transmit
+        state = radio->transmit(tx_buffer);
 
-//         if (state == RADIOLIB_ERR_NONE) {
-//             ESP_LOGI(TAG_LORA, "TX success!");
-//         } else {
-//             ESP_LOGE(TAG_LORA, "TX failed, code %d", state);
-//         }
+        if (state == RADIOLIB_ERR_NONE) {
+            ESP_LOGI(TAG_LORA, "TX success!");
+        } else {
+            ESP_LOGE(TAG_LORA, "TX failed, code %d", state);
+        }
 
-//         // Wait for 1 second
-//         vTaskDelay(pdMS_TO_TICKS(1000));
-//     }
-// }
+        // Wait for 1 second
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
 
-// // ===================== BAROMETER TASK =====================
+// ===================== BAROMETER TASK =====================
 
 static void baro_task(void *arg) {
     dps310_t dps;
@@ -325,8 +338,11 @@ extern "C" void app_main(void) {
     // Barometer Task
     xTaskCreatePinnedToCore(baro_task, "baro_task", 4096, NULL, 4, NULL, 1);
     
+    BaseType_t ok;
+
     // // LoRa Task
-    // xTaskCreatePinnedToCore(lora_task, "lora_task", 5120, NULL, 10, NULL, 1);
+    ok = xTaskCreatePinnedToCore(lora_task, "lora_task", 5120, NULL, 10, NULL, 1);
+    ESP_LOGI(TAG_MAIN, "lora_task create: %s", ok == pdPASS ? "OK" : "FAIL");
 
     // TMP117 Task
     xTaskCreatePinnedToCore(tmp117_task, "tpm117_task", 4096, NULL, 8, NULL, 1);
