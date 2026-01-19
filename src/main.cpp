@@ -107,6 +107,13 @@ static void lora_task(void *arg) {
     ESP_LOGI(TAG_LORA, "SX127x RegVersion=0x%02X (expected 0x12)", ver);
 
     int state = radio->begin();
+    radio->setFrequency(915.0);
+    radio->setBandwidth(125.0);
+    radio->setSpreadingFactor(7);
+    radio->setCodingRate(5);
+    radio->setSyncWord(0x12);
+    radio->setCRC(true);
+    radio->setPreambleLength(8);
     
     if (state != RADIOLIB_ERR_NONE) {
         ESP_LOGE(TAG_LORA, "radio->begin() failed, code %d", state);
