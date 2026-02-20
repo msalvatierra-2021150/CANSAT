@@ -1,7 +1,6 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include "cJSON.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -21,20 +20,35 @@
 #include "neo6m/neo6m.h"
 #include "tmp117/tmp117.h"
 
-struct Data 
-{
+//Remove padding 
+#pragma pack(push, 1)
+typedef struct {
+/* 
+    magic1 and magic2: “signature bytes”
+    They help confirm this packet is your telemetry, not random garbage.
+
+    version: if you change packet layout later, you bump the version.
+
+    count: packet counter so you can see if packets are being dropped.
+*/
+  uint8_t  magic1;   // 0xCA
+  uint8_t  magic2;   // 0xFE
+  uint8_t  version;  // 1
+  uint8_t  count;    
+
+  //Payload
   float accelX, accelY, accelZ;
-  float gyroX, gyroY, gyroZ;
+  float gyroX,  gyroY,  gyroZ;
   float pressure;
   float temp;
   float velocityX, velocityY, velocityZ;
   float altitude;
-};
-
+} TelemetryF32V1;
+#pragma pack(pop)
 
 // Mutex handle to protect the data
 SemaphoreHandle_t dataMutex = NULL;
-Data transmittedData; 
+TelemetryF32V1 transmittedData; 
 
 
 // ===================== PIN DEFINITIONS =====================
@@ -124,12 +138,11 @@ static void lora_task(void *arg) {
     }
     ESP_LOGI(TAG_LORA, "radio->begin() success!");
 
-    // Buffer for the JSON string
-    char tx_buffer[256];
+    static uint16_t pktCounter = 0;
     // 4. Transmission Loop
     while (1) {
     // 1. Create a local copy of data to minimize mutex holding time
-        Data localData;
+        TelemetryF32V1 localData;
         
         // Take Mutex
         if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE) {
@@ -137,24 +150,17 @@ static void lora_task(void *arg) {
             xSemaphoreGive(dataMutex);   // Release Mutex
         }
 
-        // 2. Format as JSON (Matching your Receiver's keys!)
-        // Keys: ax, ay, az, gx, gy, gz, press, alt, vx, vy
-        snprintf(tx_buffer, sizeof(tx_buffer), 
-    "{\"ax\":%.2f,\"ay\":%.2f,\"az\":%.2f,"
-    "\"gx\":%.2f,\"gy\":%.2f,\"gz\":%.2f,"
-    "\"press\":%.2f,\"alt\":%.2f,"
-    "\"temp\":%.2f,"
-    "\"vx\":%.2f,\"vy\":%.2f}",
-    localData.accelX, localData.accelY, localData.accelZ,
-    localData.gyroX, localData.gyroY, localData.gyroZ,
-    localData.pressure, localData.altitude,
-    localData.temp, localData.velocityX, localData.velocityY
-);
-
-        ESP_LOGI(TAG_LORA, "Sending: %s", tx_buffer);
+        ESP_LOGI(TAG_LORA, "Sending");
 
         // 3. Transmit
-        state = radio->transmit(tx_buffer);
+        // Transmit raw binary struct
+        localData.magic1  = 0xCA;
+        localData.magic2  = 0xFE;
+        localData.version = 1;
+        localData.count   = pktCounter++;
+
+        state = radio->transmit((uint8_t*)&localData, sizeof(localData));
+
 
         if (state == RADIOLIB_ERR_NONE) {
             ESP_LOGI(TAG_LORA, "TX success!");
