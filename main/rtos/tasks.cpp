@@ -196,37 +196,38 @@ void tmp117_task(void *arg) {
 
 // // ===================== LSM9DS1 TASK =====================
 
-// void lsm9ds1_task(void *arg) {
-//     ESP_LOGI(TAG_IMU, "Starting LSM9DS1 task...");
+void lsm9ds1_task(void *arg) {
+    ESP_LOGI(TAG_IMU, "Starting LSM9DS1 task...");
+    ESP_ERROR_CHECK(lsm9ds1_attach(bus_handle));
+    ESP_ERROR_CHECK(lsm9ds1_init());
+    while (1) {
+        float ax, ay, az;
+        float gx, gy, gz;
 
-//     while (1) {
-//         float ax, ay, az;
-//         float gx, gy, gz;
+        if (lsm9ds1_read_accel(&ax, &ay, &az) == ESP_OK) {
+            ESP_LOGI(TAG_IMU, "Accel (mg): X=%.2f Y=%.2f Z=%.2f", ax, ay, az);
 
-//         if (lsm9ds1_read_accel(&ax, &ay, &az) == ESP_OK) {
-//             ESP_LOGI(TAG_IMU, "Accel (mg): X=%.2f Y=%.2f Z=%.2f", ax, ay, az);
+            if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE)
+            {
+                transmittedData.accelX = ax;
+                transmittedData.accelY = ay;
+                transmittedData.accelZ = az;
+                //UNLOCK
+                xSemaphoreGive(dataMutex);
+            }
+        }
+        if (lsm9ds1_read_gyro(&gx, &gy, &gz) == ESP_OK) {
+            ESP_LOGI(TAG_IMU, "Accel (deg/s): X=%.2f Y=%.2f Z=%.2f", gx, gy, gz);
 
-//             if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE)
-//             {
-//                 transmittedData.accelX = ax;
-//                 transmittedData.accelY = ay;
-//                 transmittedData.accelZ = az;
-//                 //UNLOCK
-//                 xSemaphoreGive(dataMutex);
-//             }
-//         }
-//         if (lsm9ds1_read_gyro(&gx, &gy, &gz) == ESP_OK) {
-//             ESP_LOGI(TAG_IMU, "Accel (deg/s): X=%.2f Y=%.2f Z=%.2f", gx, gy, gz);
-
-//             if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE)
-//             {
-//                 transmittedData.gyroX = gx;
-//                 transmittedData.gyroY = gy;
-//                 transmittedData.gyroZ = gz;
-//                 //UNLOCK
-//                 xSemaphoreGive(dataMutex);
-//             }
-//         }
-//         vTaskDelay(pdMS_TO_TICKS(1000));
-//     }
-// }
+            if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE)
+            {
+                transmittedData.gyroX = gx;
+                transmittedData.gyroY = gy;
+                transmittedData.gyroZ = gz;
+                //UNLOCK
+                xSemaphoreGive(dataMutex);
+            }
+        }
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}

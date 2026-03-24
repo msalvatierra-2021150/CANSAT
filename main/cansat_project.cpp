@@ -27,7 +27,7 @@ void app_main(void) {
   // ---------------------------------------------------------
   i2c_init();
 
-  // ESP_LOGI(TAG_MAIN, "Creating tasks...");
+  ESP_LOGI(TAG_MAIN, "Creating tasks...");
 
   // // ---------------------------------------------------------
   // // STEP 3: Create Tasks
@@ -36,7 +36,7 @@ void app_main(void) {
   xTaskCreatePinnedToCore(gps_task, "gps_task", 4096, NULL, 5, NULL, 1);
 
   // // // // IMU Task
-  // xTaskCreatePinnedToCore(lsm9ds1_task, "lsm9ds1_task", 4096, NULL, 8, NULL, 1);
+  xTaskCreatePinnedToCore(lsm9ds1_task, "lsm9ds1_task", 4096, NULL, 8, NULL, 1);
 
   // // // Barometer Task
   xTaskCreatePinnedToCore(baro_task, "baro_task", 4096, NULL, 4, NULL, 1);
