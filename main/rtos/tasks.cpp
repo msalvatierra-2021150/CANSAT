@@ -44,72 +44,79 @@ TelemetryF32V1 transmittedData;
 SemaphoreHandle_t dataMutex;
 
 // ===================== LORA TASK =====================
-
 void lora_task(void *arg) {
-    ESP_LOGI(TAG_LORA, "Setting up LoRa Hardware...");
 
-    // 1. Initialize HAL (SPI)
-    EspHal* hal = new EspHal(SX1276_SCK, SX1276_MISO, SX1276_MOSI);
+  ESP_LOGI(TAG_LORA, "Setting up LoRa Hardware...");
 
-    // 2. Initialize Radio Module
-    ESP_LOGI(TAG_LORA, "[SX1276] Initializing FSK...");
+  // 1. Initialize HAL (SPI)
+  EspHal *hal = new EspHal(SX1276_SCK, SX1276_MISO, SX1276_MOSI);
 
-    Module* module = new Module(
-        hal,
-        SX1276_CS,
-        SX1276_DIO0,
-        SX1276_RST,
-        SX1276_DIO1
-    );
+  // 2. Initialize Radio Module
+  ESP_LOGI(TAG_LORA, "[SX1276] Initializing FSK...");
 
-    SX1276* radio = new SX1276(module);
+  Module *module = new Module(
+      hal,
+      SX1276_CS,
+      SX1276_DIO0,
+      SX1276_RST,
+      SX1276_DIO1
+  );
 
-    int state = radio->beginFSK(915.0, 50.0, 25.0, 100.0, 17, 40);
-    if (state != RADIOLIB_ERR_NONE) {
+  SX1276 *radio = new SX1276(module);
+
+  int state = radio->beginFSK(915.0, 50.0, 25.0, 125.0, 17, 40);
+
+  if (state != RADIOLIB_ERR_NONE) {
     ESP_LOGE(TAG_LORA, "FSK init failed: %d", state);
-    while (true) vTaskDelay(pdMS_TO_TICKS(1000));
-    }
-    ESP_LOGI(TAG_LORA, "FSK init success");
+    while (true)
+      vTaskDelay(pdMS_TO_TICKS(1000));
+  }
 
-    // Match RX packet settings:
-    radio->setCRC(true);
-    radio->fixedPacketLengthMode(sizeof(TelemetryF32V1));
-    uint8_t syncWord[] = { 0x2D, 0xD4 };
-    radio->setSyncWord(syncWord, 2);
+  ESP_LOGI(TAG_LORA, "FSK init success");
 
-    static uint16_t pktCounter = 0;
-    // 4. Transmission Loop
-    while (1) {
+  // Match RX packet settings:
+  radio->setCRC(true);
+  radio->fixedPacketLengthMode(sizeof(TelemetryF32V1));
+
+  uint8_t syncWord[] = {0x2D, 0xD4};
+
+  radio->setSyncWord(syncWord, 2);
+
+  static uint16_t pktCounter = 0;
+
+  // 4. Transmission Loop
+  while (1) {
     // 1. Create a local copy of data to minimize mutex holding time
-        TelemetryF32V1 localData;
-
-        // Take Mutex
-        if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE) {
-            localData = transmittedData; // Copy global to local
-            xSemaphoreGive(dataMutex);   // Release Mutex
-        }
-
-        ESP_LOGI(TAG_LORA, "Sending");
-
-        // 3. Transmit
-        // Transmit raw binary struct
-        localData.magic1  = 0xCA;
-        localData.magic2  = 0xFE;
-        localData.version = 1;
-        localData.count   = pktCounter++;
-
-        state = radio->transmit((uint8_t*)&localData, sizeof(localData));
-
-
-        if (state == RADIOLIB_ERR_NONE) {
-            ESP_LOGI(TAG_LORA, "TX success!");
-        } else {
-            ESP_LOGE(TAG_LORA, "TX failed, code %d", state);
-        }
-
-        // Wait for 1 second
-        vTaskDelay(pdMS_TO_TICKS(1000));
+    TelemetryF32V1 localData;
+    // Take Mutex
+    if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE) {
+      localData = transmittedData; // Copy global to local
+      xSemaphoreGive(dataMutex); // Release Mutex
     }
+
+    ESP_LOGI(TAG_LORA, "Sending");
+
+    // 3. Transmit
+    // Transmit raw binary struct
+
+    localData.magic1 = 0xCA;
+    localData.magic2 = 0xFE;
+    localData.version = 1;
+    localData.count = pktCounter++;
+
+    state = radio->transmit((uint8_t *)&localData, sizeof(localData));
+
+    printf("State: %d\n", sizeof(localData));
+
+    if (state == RADIOLIB_ERR_NONE) {
+      ESP_LOGI(TAG_LORA, "TX success!");
+    } else {
+      ESP_LOGE(TAG_LORA, "TX failed, code %d", state);
+    }
+
+    // Wait for 1 second
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
 }
 
 // //===================== BAROMETER TASK =====================
@@ -185,6 +192,7 @@ void tmp117_task(void *arg) {
 
     if (tmp117_read_raw(&raw_temperature) == ESP_OK) {
       float temperature_c = tmp117_compensate(raw_temperature);
+      transmittedData.temp = temperature_c;
       ESP_LOGI(TAG, "Temperature: %.2f C", temperature_c);
     } else {
       ESP_LOGE(TAG, "Failed to read TMP117");
