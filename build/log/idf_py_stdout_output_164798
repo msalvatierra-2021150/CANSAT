@@ -1,0 +1,91 @@
+Command: ninja all
+[1/10] Performing build step for 'bootloader'
+[1/1] cd /home/michael/cansat/cansat_project/build/bootloader && /home/michael/.espressif/tools/python/v6.0/venv/bin/python /home/michael/.espressif/v6.0/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 /home/michael/cansat/cansat_project/build/bootloader/bootloader.bin
+Bootloader binary size 0x5240 bytes. 0x2dc0 bytes (36%) free.
+[2/10] No install step for 'bootloader'
+[3/10] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/tmp117/tmp117.c.obj
+[4/10] Completed 'bootloader'
+[5/10] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/rtos/tasks.cpp.obj
+In file included from /home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/modules/CC1101/CC1101.h:7,
+                 from /home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/RadioLib.h:76,
+                 from /home/michael/cansat/cansat_project/main/rtos/tasks.cpp:14:
+/home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/modules/CC1101/../../protocols/PhysicalLayer/PhysicalLayer.h:499:21: warning: 'virtual int16_t PhysicalLayer::setOutputPower(int8_t)' was hidden [-Woverloaded-virtual=]
+  499 |     virtual int16_t setOutputPower(int8_t power);
+      |                     ^~~~~~~~~~~~~~
+In file included from /home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/modules/LLCC68/../SX126x/SX1262.h:9,
+                 from /home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/modules/LLCC68/LLCC68.h:9,
+                 from /home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/RadioLib.h:77:
+/home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/modules/LLCC68/../SX126x/SX126x.h:824:13: note:   by 'int16_t SX126x::setOutputPower(int8_t, uint8_t, uint8_t, uint8_t)'
+  824 |     int16_t setOutputPower(int8_t power, uint8_t paDutyCycle, uint8_t hpMax, uint8_t deviceSel);
+      |             ^~~~~~~~~~~~~~
+/home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/modules/CC1101/../../protocols/PhysicalLayer/PhysicalLayer.h:576:28: warning: 'virtual RadioLibTime_t PhysicalLayer::getTimeOnAir(size_t)' was hidden [-Woverloaded-virtual=]
+  576 |     virtual RadioLibTime_t getTimeOnAir(size_t len);
+      |                            ^~~~~~~~~~~~
+In file included from /home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/modules/LR2021/LR2021.h:11,
+                 from /home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/RadioLib.h:81:
+/home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/modules/LR2021/../LR11x0/LR_common.h:193:20: note:   by 'RadioLibTime_t LRxxxx::getTimeOnAir(size_t, ModemType_t)'
+  193 |     RadioLibTime_t getTimeOnAir(size_t len, ModemType_t modem);
+      |                    ^~~~~~~~~~~~
+/home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/modules/CC1101/../../protocols/PhysicalLayer/PhysicalLayer.h:515:21: warning: 'virtual int16_t PhysicalLayer::setSyncWord(uint8_t*, size_t)' was hidden [-Woverloaded-virtual=]
+  515 |     virtual int16_t setSyncWord(uint8_t* sync, size_t len);
+      |                     ^~~~~~~~~~~
+In file included from /home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/RadioLib.h:83:
+/home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/modules/RF69/RF69.h:800:13: note:   by 'int16_t RF69::setSyncWord(const uint8_t*, size_t, uint8_t)'
+  800 |     int16_t setSyncWord(const uint8_t* syncWord, size_t len, uint8_t maxErrBits = 0);
+      |             ^~~~~~~~~~~
+/home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/modules/CC1101/../../protocols/PhysicalLayer/PhysicalLayer.h:499:21: warning: 'virtual int16_t PhysicalLayer::setOutputPower(int8_t)' was hidden [-Woverloaded-virtual=]
+  499 |     virtual int16_t setOutputPower(int8_t power);
+      |                     ^~~~~~~~~~~~~~
+/home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/modules/RF69/RF69.h:792:13: note:   by 'int16_t RF69::setOutputPower(int8_t, bool)'
+  792 |     int16_t setOutputPower(int8_t pwr, bool highPower = false);
+      |             ^~~~~~~~~~~~~~
+/home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/modules/CC1101/../../protocols/PhysicalLayer/PhysicalLayer.h:553:19: warning: 'virtual float PhysicalLayer::getRSSI()' was hidden [-Woverloaded-virtual=]
+  553 |     virtual float getRSSI();
+      |                   ^~~~~~~
+In file included from /home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/modules/SX127x/SX1272.h:9,
+                 from /home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/RadioLib.h:95:
+/home/michael/cansat/cansat_project/managed_components/jgromes__radiolib/src/modules/SX127x/SX127x.h:1282:11: note:   by 'float SX127x::getRSSI(bool, bool, int16_t)'
+ 1282 |     float getRSSI(bool packet, bool skipReceive, int16_t offset);
+      |           ^~~~~~~
+In file included from /home/michael/cansat/cansat_project/main/dps310/dps310.h:2,
+                 from /home/michael/cansat/cansat_project/main/rtos/tasks.cpp:19:
+/home/michael/.espressif/v6.0/esp-idf/components/driver/i2c/include/driver/i2c.h:29:103: note: '#pragma message: 
+================================ CRITICAL WARNING ================================
+This legacy I2C driver (driver/i2c.h) is officially END-OF-LIFE (EOL) as of ESP-IDF v6.0.
+
+1. NO SUPPORT: ESP-IDF will not provide updates, bug fixes, or security patches timely.
+2. PLANNED REMOVAL: This driver WILL BE REMOVED in ESP-IDF v7.0 (next major release).
+3. ACTION REQUIRED: Migrate to 'driver/i2c_master.h' or 'driver/i2c_slave.h' immediately.
+   - If you are a library maintainer, please update your code.
+   - If you are using 3rd-party libraries, contact the authors for updates.
+
+4. SUPPRESS WARNING: Set Kconfig 'CONFIG_I2C_SUPPRESS_DEPRECATE_WARN=y' to silent
+   this warning. However, by doing so, YOU ASSUME ALL RISKS including potential
+   security vulnerabilities, system instability, and future incompatibility.
+
+For API reference of the new I2C driver, see: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/i2c.html
+For other items about migration, see: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/migration-guides/index.html
+==================================================================================
+   '
+   29 |                 "==================================================================================\n")
+      |                                                                                                       ^
+/home/michael/cansat/cansat_project/main/rtos/tasks.cpp:41:20: warning: 'TAG_TMP' defined but not used [-Wunused-variable]
+   41 | static const char *TAG_TMP   = "TMP";
+      |                    ^~~~~~~
+/home/michael/cansat/cansat_project/main/rtos/tasks.cpp:40:20: warning: 'TAG_IMU' defined but not used [-Wunused-variable]
+   40 | static const char *TAG_IMU   = "IMU";
+      |                    ^~~~~~~
+/home/michael/cansat/cansat_project/main/rtos/tasks.cpp:37:20: warning: 'TAG_BARO' defined but not used [-Wunused-variable]
+   37 | static const char *TAG_BARO  = "BARO";
+      |                    ^~~~~~~~
+[6/10] Linking C static library esp-idf/main/libmain.a
+[7/10] Generating esp-idf/esp_system/ld/sections.ld
+[8/10] Linking CXX executable cansat_project.elf
+[9/10] Generating binary image from built executable
+esptool v5.2.0
+Creating ESP32-S3 image...
+Merged 2 ELF sections.
+Successfully created ESP32-S3 image.
+Generated /home/michael/cansat/cansat_project/build/cansat_project.bin
+[10/10] cd /home/michael/cansat/cansat_project/build && /home/michael/.espressif/tools/python/v6.0/venv/bin/python /home/michael/.espressif/v6.0/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app /home/michael/cansat/cansat_project/build/partition_table/partition-table.bin /home/michael/cansat/cansat_project/build/cansat_project.bin
+cansat_project.bin binary size 0x2de30 bytes. Smallest app partition is 0x100000 bytes. 0xd21d0 bytes (82%) free.

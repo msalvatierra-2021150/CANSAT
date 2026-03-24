@@ -1,0 +1,2 @@
+source /home/michael/cansat/cansat_project/build/gdbinit/symbols
+source /home/michael/cansat/cansat_project/build/gdbinit/connect
