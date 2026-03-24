@@ -147,31 +147,31 @@ void baro_task(void *arg) {
 }
 
 // // ===================== GPS TASK =====================
-// void gps_task(void *arg) {
-//     ESP_LOGI(TAG_GPS, "Starting GPS task...");
-//     gps_start();
+void gps_task(void *arg) {
+    ESP_LOGI(TAG_GPS, "Starting GPS task...");
+    gps_start();
 
-//     while (1) {
-//         raw_nmea();
-//         float v_north = 0.0f;
-//         float v_east = 0.0f;
+    while (1) {
+        raw_nmea();
+        float v_north = 0.0f;
+        float v_east = 0.0f;
 
-//         if (gps_get_ground_velocity_ms(&v_north, &v_east)) {
-//             ESP_LOGI(TAG_GPS, "v_north=%.2f m/s  v_east=%.2f m/s", v_north, v_east);
+        if (gps_get_ground_velocity_ms(&v_north, &v_east)) {
+            ESP_LOGI(TAG_GPS, "v_north=%.2f m/s  v_east=%.2f m/s", v_north, v_east);
 
-//             if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE)
-//                 {
-//                     transmittedData.velocityX = v_north;
-//                     transmittedData.velocityY = v_east;
-//                     //UNLOCK
-//                     xSemaphoreGive(dataMutex);
-//                 }
-//         } else {
-//             ESP_LOGW(TAG_GPS, "Could not parse ground velocity");
-//         }
-//         vTaskDelay(pdMS_TO_TICKS(500));
-//     }
-// }
+            if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE)
+                {
+                    transmittedData.velocityX = v_north;
+                    transmittedData.velocityY = v_east;
+                    //UNLOCK
+                    xSemaphoreGive(dataMutex);
+                }
+        } else {
+            ESP_LOGW(TAG_GPS, "Could not parse ground velocity");
+        }
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+}
 
 // ===================== TMP117 TASK =====================
 void tmp117_task(void *arg) {

@@ -33,7 +33,7 @@ void app_main(void) {
   // // STEP 3: Create Tasks
   // // ---------------------------------------------------------
   // // // GPS Task
-  // xTaskCreatePinnedToCore(gps_task, "gps_task", 4096, NULL, 5, NULL, 1);
+  xTaskCreatePinnedToCore(gps_task, "gps_task", 4096, NULL, 5, NULL, 1);
 
   // // // // IMU Task
   // xTaskCreatePinnedToCore(lsm9ds1_task, "lsm9ds1_task", 4096, NULL, 8, NULL, 1);
