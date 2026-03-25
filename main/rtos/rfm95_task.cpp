@@ -90,7 +90,7 @@ void rfm95_task(void *arg) {
       vTaskDelay(pdMS_TO_TICKS(10));
 
       // After sending telemetry, check if a new image is ready in your buffer
-      image_is_ready_to_send = true;
+      // image_is_ready_to_send = true;
       if (image_is_ready_to_send) {
         currentState = BURST_IMAGE;
         // currentChunkToSend = 0;
