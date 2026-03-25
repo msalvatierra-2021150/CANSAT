@@ -9,6 +9,7 @@ idf_component_register(
          "gps_speed/2d_velocity.c"
          "i2c/i2c_bus.c"
          "fs/fs_handler.c"
+         "rtos/rfm95_task.cpp"
     INCLUDE_DIRS "." "rtos" "tmp117" "lsm9ds1" "dps310" "neo6m""gps_speed" "EspHal" "i2c" "fs"
 )
 # This automatically builds the data/ folder and flashes it to the 'storage' partition

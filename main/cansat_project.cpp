@@ -6,6 +6,7 @@
 #include "i2c/i2c_bus.h"
 #include <stdio.h>
 #include "fs/fs_handler.h"
+#include "rfm95_task.h"
 
 static const char *TAG_MAIN = "MAIN";
 
@@ -48,7 +49,7 @@ extern "C" {
     BaseType_t ok;
 
     // RFM95W FSK Task
-    // ok = xTaskCreatePinnedToCore(lora_task, "lora_task", 5120, NULL, 10, NULL, 1);
+    ok = xTaskCreatePinnedToCore(rfm95_task, "rfm95_task", 5120, NULL, 10, NULL, 1);
     // ESP_LOGI(TAG_MAIN, "lora_task create: %s", ok == pdPASS ? "OK" : "FAIL");
 
     xTaskCreatePinnedToCore(tmp117_task, "tpm117_task", 4096, NULL, 8, NULL, 1);

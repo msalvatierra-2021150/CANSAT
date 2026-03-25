@@ -89,6 +89,11 @@ public:
     ets_delay_us(us);
   }
 
+  void yield() override {
+    // This allows FreeRTOS to switch tasks and resets the Watchdog Timer
+    vTaskDelay(1);
+  }
+
   unsigned long millis() override {
     return (unsigned long)(esp_timer_get_time() / 1000ULL);
   }
