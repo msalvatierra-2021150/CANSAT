@@ -20,7 +20,7 @@ DeviceState_t currentState = SEND_TELEMETRY;
 
 static const char *TAG_RFM95 = "RFM95";
 
-bool image_is_ready_to_send = false;
+bool image_is_ready_to_send = true;
 
 void rfm95_task(void *arg) {
   ESP_LOGI(TAG_RFM95, "Setting up RFM95 Hardware...");
