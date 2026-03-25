@@ -43,81 +43,113 @@ static const char *TAG_TMP   = "TMP";
 TelemetryF32V1 transmittedData;
 SemaphoreHandle_t dataMutex;
 
-// ===================== LORA TASK =====================
-void lora_task(void *arg) {
+// // ===================== LORA TASK =====================
+// enum SystemState { SEND_TELEMETRY, BURST_IMAGE, LISTEN_FOR_NACK };
 
-  ESP_LOGI(TAG_LORA, "Setting up LoRa Hardware...");
+// SystemState currentState = SEND_TELEMETRY;
+// uint16_t currentChunkToSend = 0;
 
-  // 1. Initialize HAL (SPI)
-  EspHal *hal = new EspHal(SX1276_SCK, SX1276_MISO, SX1276_MOSI);
+// void lora_task(void *arg) {
+//   ESP_LOGI(TAG_LORA, "Setting up LoRa Hardware...");
 
-  // 2. Initialize Radio Module
-  ESP_LOGI(TAG_LORA, "[SX1276] Initializing FSK...");
+//   // 1. Initialize HAL (SPI)
+//   EspHal *hal = new EspHal(SX1276_SCK, SX1276_MISO, SX1276_MOSI);
 
-  Module *module = new Module(
-      hal,
-      SX1276_CS,
-      SX1276_DIO0,
-      SX1276_RST,
-      SX1276_DIO1
-  );
+//   // 2. Initialize Radio Module
+//   ESP_LOGI(TAG_LORA, "[SX1276] Initializing FSK...");
 
-  SX1276 *radio = new SX1276(module);
+//   Module *module =
+//       new Module(hal, SX1276_CS, SX1276_DIO0, SX1276_RST, SX1276_DIO1);
 
-  int state = radio->beginFSK(915.0, 50.0, 25.0, 125.0, 17, 40);
+//   SX1276 *radio = new SX1276(module);
 
-  if (state != RADIOLIB_ERR_NONE) {
-    ESP_LOGE(TAG_LORA, "FSK init failed: %d", state);
-    while (true)
-      vTaskDelay(pdMS_TO_TICKS(1000));
-  }
+//   int state = radio->beginFSK(915.0, 50.0, 25.0, 125.0, 17, 40);
 
-  ESP_LOGI(TAG_LORA, "FSK init success");
+//   if (state != RADIOLIB_ERR_NONE) {
+//     ESP_LOGE(TAG_LORA, "FSK init failed: %d", state);
+//     while (true)
+//       vTaskDelay(pdMS_TO_TICKS(1000));
+//   }
 
-  // Match RX packet settings:
-  radio->setCRC(true);
-  radio->fixedPacketLengthMode(sizeof(TelemetryF32V1));
+//   ESP_LOGI(TAG_LORA, "FSK init success");
 
-  uint8_t syncWord[] = {0x2D, 0xD4};
+//   // Match RX packet settings:
+//   radio->setCRC(true);
+//   radio->variablePacketLengthMode();
 
-  radio->setSyncWord(syncWord, 2);
+//   uint8_t syncWord[] = {0x2D, 0xD4};
 
-  static uint16_t pktCounter = 0;
+//   radio->setSyncWord(syncWord, 2);
 
-  // 4. Transmission Loop
-  while (1) {
-    // 1. Create a local copy of data to minimize mutex holding time
-    TelemetryF32V1 localData;
-    // Take Mutex
-    if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE) {
-      localData = transmittedData; // Copy global to local
-      xSemaphoreGive(dataMutex); // Release Mutex
-    }
+//   static uint16_t pktCounter = 0;
 
-    ESP_LOGI(TAG_LORA, "Sending");
+//   // 4. Transmission Loop
+//   while (1) {
+//     .switch (currentState) {
+//     case SEND_TELEMETRY:
+//       // 1. Create a local copy of data to minimize mutex holding time
+//       TelemetryF32V1 localData;
+//       // Take Mutex
+//       if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE) {
+//         localData = transmittedData; // Copy global to local
+//         xSemaphoreGive(dataMutex);   // Release Mutex
+//       }
 
-    // 3. Transmit
-    // Transmit raw binary struct
+//       ESP_LOGI(TAG_LORA, "Sending");
 
-    localData.magic1 = 0xCA;
-    localData.magic2 = 0xFE;
-    localData.version = 1;
-    localData.count = pktCounter++;
+//       // 3. Transmit
+//       // Transmit raw binary struct
+//       localData.magic1 = 0xCA;
+//       localData.magic2 = 0xFE;
+//       localData.version = 1;
+//       localData.count = pktCounter++;
 
-    state = radio->transmit((uint8_t *)&localData, sizeof(localData));
+//       state = radio->transmit((uint8_t *)&localData, sizeof(localData));
 
-    printf("State: %d\n", sizeof(localData));
+//       printf("State: %d\n", sizeof(localData));
 
-    if (state == RADIOLIB_ERR_NONE) {
-      ESP_LOGI(TAG_LORA, "TX success!");
-    } else {
-      ESP_LOGE(TAG_LORA, "TX failed, code %d", state);
-    }
+//       if (state == RADIOLIB_ERR_NONE) {
+//         ESP_LOGI(TAG_LORA, "TX success!");
+//       } else {
+//         ESP_LOGE(TAG_LORA, "TX failed, code %d", state);
+//       }
 
-    // Wait for 1 second
-    vTaskDelay(pdMS_TO_TICKS(1000));
-  }
-}
+//       // Wait for 1 second
+//       vTaskDelay(pdMS_TO_TICKS(1000));
+
+//       // After sending telemetry, check if a new image is ready in your buffer
+//       image_is_ready_to_send = true;
+//       if (image_is_ready_to_send) {
+//         currentState = BURST_IMAGE;
+//         currentChunkToSend = 0;
+//       } else {
+//         vTaskDelay(pdMS_TO_TICKS(1000)); // Normal telemetry delay
+//       }
+//       break;
+
+//     case BURST_IMAGE:
+//       // 1. Construct ImageChunkPacket for 'currentChunkToSend'
+//       // 2. Read 200 bytes from your JPEG buffer
+//       // 3. Transmit it: radio->transmit((uint8_t*)&chunk, sizeof(chunk));
+//       chunkingImage();
+
+//       // If we fired all chunks, switch to listening for gaps
+//       if (currentChunkToSend >= total_image_chunks) {
+//         currentState = LISTEN_FOR_NACK;
+//         // Briefly switch radio to receive mode
+//         radio->startReceive();
+//       }
+//       break;
+
+//     case LISTEN_FOR_NACK:
+//       // Wait briefly to see if Ground Station requests missing chunks
+//       // If timeout -> Assume success (or wait for Ground Station ACK) -> go
+//       // back to SEND_TELEMETRY If NACK received -> Parse the missing_chunks
+//       // array, resend those specific chunks
+//       break;
+//     }
+//   }
+// }
 
 // //===================== BAROMETER TASK =====================
 void baro_task(void *arg) {
