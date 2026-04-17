@@ -5,8 +5,11 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "fs/fs_handler.h"
 #include "img_converters.h"
 #include "ptc06.h"
+#include "rfm95_task.h"
+
 
 #include <limits.h>
 #include <stdlib.h>
@@ -48,7 +51,6 @@ esp_err_t run_anaglyph_capture_cycle(ptc06_t *cam,
   uint8_t *anaglyph_jpeg = NULL;
   size_t anaglyph_jpeg_size = 0;
   offset_2d_t offset = {0, 0};
-  int written = -1;
 
   ESP_LOGI(TAG_CAM, "[1/7] Capturing photo 1...");
   if (ptc06_capture_jpeg_to_buffer(cam, &jpg1, &len1) != ESP_OK) {
@@ -107,17 +109,11 @@ esp_err_t run_anaglyph_capture_cycle(ptc06_t *cam,
     goto cleanup;
   }
 
-  printf("IMG_START:%d\n", (int)anaglyph_jpeg_size);
-  vTaskDelay(pdMS_TO_TICKS(50));
+  replaceImageInPSRAM(anaglyph_jpeg, anaglyph_jpeg_size);
+  image_is_ready_to_send = true;
 
-  written = uart_write_bytes(UART_NUM_0, (const char *)anaglyph_jpeg,
-                             anaglyph_jpeg_size);
-  if (written < 0) {
-    ESP_LOGE(TAG_CAM, "Failed to send anaglyph over UART0");
-    ret = ESP_FAIL;
-  } else {
-    ESP_LOGI(TAG_CAM, "Anaglyph sent successfully (%d bytes)", written);
-  }
+  ESP_LOGI(TAG_CAM, "Anaglyph queued for radio TX (%d bytes)",
+           (int)anaglyph_jpeg_size);
 
 cleanup:
   if (anaglyph_jpeg) {

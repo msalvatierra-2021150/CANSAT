@@ -1,7 +1,6 @@
 idf_component_register(
     SRCS "cansat_project.cpp"
          "rtos/tasks.cpp"
-         "tmp117/tmp117.c"
          "lsm9ds1/lsm9ds1_hal.c"
          "lsm9ds1/lsm9ds1_reg.c"
          "dps310/dps310.c"
@@ -15,7 +14,6 @@ idf_component_register(
          "../lib/PTC06/ptc06.c"
     INCLUDE_DIRS "."
                  "rtos"
-                 "tmp117"
                  "lsm9ds1"
                  "dps310"
                  "neo6m"

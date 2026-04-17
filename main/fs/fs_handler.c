@@ -61,6 +61,32 @@ void loadImageIntoPSRAM() {
   ESP_LOGI("FS", "Image loaded to PSRAM successfully.");
 }
 
+void replaceImageInPSRAM(const uint8_t *data, size_t len) {
+  if (data == NULL || len == 0) {
+    ESP_LOGE("FS", "replaceImageInPSRAM got invalid data");
+    return;
+  }
+
+  if (image_buffer != NULL) {
+    heap_caps_free(image_buffer);
+    image_buffer = NULL;
+    image_size = 0;
+  }
+
+  image_buffer =
+      (uint8_t *)heap_caps_malloc(len, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  if (image_buffer == NULL) {
+    ESP_LOGE("FS", "Failed to allocate PSRAM for generated image");
+    return;
+  }
+
+  memcpy(image_buffer, data, len);
+  image_size = len;
+
+  ESP_LOGI("FS", "Generated image copied to PSRAM: %u bytes",
+           (unsigned)image_size);
+}
+
 /*
 Memory partition explanation
 Powered the Pins: We told the ESP32 to actually send electricity to the pins

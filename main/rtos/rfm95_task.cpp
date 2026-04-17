@@ -20,7 +20,9 @@ DeviceState_t currentState = SEND_TELEMETRY;
 
 static const char *TAG_RFM95 = "RFM95";
 
-bool image_is_ready_to_send = true;
+bool image_is_ready_to_send = false;
+uint16_t current_chunk_index = 0;
+bool is_sending_image = false;
 
 void rfm95_task(void *arg) {
   ESP_LOGI(TAG_RFM95, "Setting up RFM95 Hardware...");
@@ -159,7 +161,7 @@ void sendNextImageChunk(SX1276 *radio) {
       sizeof(chunk) - payload_size + current_payload_size;
 
   // Transmit ONE 58-byte chunk (fits easily in the 64-byte FIFO)
-  radio->transmit((uint8_t *)&chunk, sizeof(chunk));
+  radio->transmit((uint8_t *)&chunk, packet_size_to_send);
   ESP_LOGI("RFM95", "Sent chunk %d of %d", chunk.chunk_index,
            chunk.total_chunks);
 

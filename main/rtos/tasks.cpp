@@ -17,7 +17,6 @@
 #include "lsm9ds1/lsm9ds1_hal.h"
 #include "neo6m/neo6m.h"
 #include "servos/servos.h"
-// #include "tmp117/tmp117.h"
 
 // ===================== LOGGING TAGS =====================
 
@@ -97,28 +96,6 @@ void gps_task(void *arg) {
     }
 }
 
-// // ===================== TMP117 TASK =====================
-// void tmp117_task(void *arg) {
-//   // TMP117 Task
-//   ESP_ERROR_CHECK(tmp117_attach(bus_handle));
-//   ESP_ERROR_CHECK(tmp117_init());
-//   static const char *TAG = "TMP117_TASK";
-
-//   while (1) {
-//     int16_t raw_temperature = 0;
-
-//     if (tmp117_read_raw(&raw_temperature) == ESP_OK) {
-//       float temperature_c = tmp117_compensate(raw_temperature);
-//       transmittedData.temp = temperature_c;
-//       ESP_LOGI(TAG, "Temperature: %.2f C", temperature_c);
-//     } else {
-//       ESP_LOGE(TAG, "Failed to read TMP117");
-//     }
-
-//     vTaskDelay(pdMS_TO_TICKS(1000));
-//   }
-// }
-
 // // ===================== LSM9DS1 TASK =====================
 
 void lsm9ds1_task(void *arg) {
@@ -188,8 +165,8 @@ void camera_task(void *arg) {
   ESP_LOGI("CAMERA", "Waiting before first capture...");
   vTaskDelay(pdMS_TO_TICKS(10000)); // 10 seconds
 
-  while (1) {
-    run_anaglyph_capture_cycle(cam, 1500);
-    vTaskDelay(pdMS_TO_TICKS(5000));
-  }
+  run_anaglyph_capture_cycle(cam, 1500);
+
+  ESP_LOGI("CAMERA", "Single capture done, deleting camera task.");
+  vTaskDelete(NULL);
 }
