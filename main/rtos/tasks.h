@@ -38,7 +38,7 @@ void gps_task(void *arg);
 // void tmp117_task(void *arg);
 void servo_task(void *arg);
 void lsm9ds1_task(void *arg);
-void i2c_init(void);
+void camera_task(void *pvParameters);
 
 #ifdef __cplusplus
 }

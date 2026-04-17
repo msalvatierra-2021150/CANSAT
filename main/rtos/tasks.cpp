@@ -11,8 +11,9 @@
 #include "esp_log.h"
 
 // --- Sensor Includes ---
-#include "gps_speed/2d_velocity.h"
+#include "camera/anaglyph_core.h"
 #include "dps310/dps310.h"
+#include "gps_speed/2d_velocity.h"
 #include "lsm9ds1/lsm9ds1_hal.h"
 #include "neo6m/neo6m.h"
 #include "servos/servos.h"
@@ -171,5 +172,24 @@ void servo_task(void *arg) {
       servo_set_angle(angle);
       vTaskDelay(pdMS_TO_TICKS(300));
     }
+  }
+}
+
+//Camera Task
+void camera_task(void *arg) {
+  ptc06_t *cam = (ptc06_t *)arg;
+
+  if (cam == NULL) {
+    ESP_LOGE("CAMERA", "camera_task received NULL cam");
+    vTaskDelete(NULL);
+    return;
+  }
+
+  ESP_LOGI("CAMERA", "Waiting before first capture...");
+  vTaskDelay(pdMS_TO_TICKS(10000)); // 10 seconds
+
+  while (1) {
+    run_anaglyph_capture_cycle(cam, 1500);
+    vTaskDelay(pdMS_TO_TICKS(5000));
   }
 }

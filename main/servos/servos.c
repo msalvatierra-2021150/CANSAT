@@ -6,7 +6,7 @@
 static const char *TAG_SERVO = "SERVO";
 
 // ===================== SERVO CONFIG =====================
-#define SERVO_GPIO 6
+#define SERVO_GPIO 7
 #define SERVO_MODE LEDC_LOW_SPEED_MODE
 #define SERVO_TIMER LEDC_TIMER_0
 #define SERVO_CHANNEL LEDC_CHANNEL_0

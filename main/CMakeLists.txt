@@ -10,8 +10,23 @@ idf_component_register(
          "i2c/i2c_bus.c"
          "fs/fs_handler.c"
          "rtos/rfm95_task.cpp"
-        "servos/servos.c"
-    INCLUDE_DIRS "." "rtos" "tmp117" "lsm9ds1" "dps310" "neo6m""gps_speed" "servos" "EspHal" "i2c" "fs"
+         "servos/servos.c"
+         "camera/anaglyph_core.cpp"
+         "../lib/PTC06/ptc06.c"
+    INCLUDE_DIRS "."
+                 "rtos"
+                 "tmp117"
+                 "lsm9ds1"
+                 "dps310"
+                 "neo6m"
+                 "gps_speed"
+                 "servos"
+                 "camera"
+                 "EspHal"
+                 "i2c"
+                 "fs"
+                 "../lib/PTC06"
+                 "../lib/jpge"
 )
-# This automatically builds the data/ folder and flashes it to the 'storage' partition
+
 spiffs_create_partition_image(storage ../data FLASH_IN_PROJECT)
