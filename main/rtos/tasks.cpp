@@ -15,7 +15,8 @@
 #include "dps310/dps310.h"
 #include "lsm9ds1/lsm9ds1_hal.h"
 #include "neo6m/neo6m.h"
-#include "tmp117/tmp117.h"
+#include "servos/servos.h"
+// #include "tmp117/tmp117.h"
 
 // ===================== LOGGING TAGS =====================
 
@@ -23,7 +24,8 @@ static const char *TAG_BARO  = "BARO";
 static const char *TAG_GPS   = "GPS";
 static const char *TAG_LORA  = "LORA";
 static const char *TAG_IMU   = "IMU";
-static const char *TAG_TMP   = "TMP";
+static const char *TAG_SERVO = "SERVO";
+// static const char *TAG_TMP   = "TMP";
 
 TelemetryF32V1 transmittedData;
 SemaphoreHandle_t dataMutex;
@@ -54,6 +56,7 @@ void baro_task(void *arg) {
       ESP_LOGI(TAG_BARO, "T=%.2f C  P=%.2f hPa  Alt≈%.1f m", t_c, p_hpa, alt_m);
 
       if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE) {
+        transmittedData.temp = t_c;
         transmittedData.pressure = p_hpa;
         transmittedData.altitude = alt_m;
         xSemaphoreGive(dataMutex);
@@ -93,27 +96,27 @@ void gps_task(void *arg) {
     }
 }
 
-// ===================== TMP117 TASK =====================
-void tmp117_task(void *arg) {
-  // TMP117 Task
-  ESP_ERROR_CHECK(tmp117_attach(bus_handle));
-  ESP_ERROR_CHECK(tmp117_init());
-  static const char *TAG = "TMP117_TASK";
+// // ===================== TMP117 TASK =====================
+// void tmp117_task(void *arg) {
+//   // TMP117 Task
+//   ESP_ERROR_CHECK(tmp117_attach(bus_handle));
+//   ESP_ERROR_CHECK(tmp117_init());
+//   static const char *TAG = "TMP117_TASK";
 
-  while (1) {
-    int16_t raw_temperature = 0;
+//   while (1) {
+//     int16_t raw_temperature = 0;
 
-    if (tmp117_read_raw(&raw_temperature) == ESP_OK) {
-      float temperature_c = tmp117_compensate(raw_temperature);
-      transmittedData.temp = temperature_c;
-      ESP_LOGI(TAG, "Temperature: %.2f C", temperature_c);
-    } else {
-      ESP_LOGE(TAG, "Failed to read TMP117");
-    }
+//     if (tmp117_read_raw(&raw_temperature) == ESP_OK) {
+//       float temperature_c = tmp117_compensate(raw_temperature);
+//       transmittedData.temp = temperature_c;
+//       ESP_LOGI(TAG, "Temperature: %.2f C", temperature_c);
+//     } else {
+//       ESP_LOGE(TAG, "Failed to read TMP117");
+//     }
 
-    vTaskDelay(pdMS_TO_TICKS(1000));
-  }
-}
+//     vTaskDelay(pdMS_TO_TICKS(1000));
+//   }
+// }
 
 // // ===================== LSM9DS1 TASK =====================
 
@@ -151,4 +154,22 @@ void lsm9ds1_task(void *arg) {
         }
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
+}
+
+// ===================== SERVO TASK =====================
+void servo_task(void *arg) {
+  ESP_LOGI(TAG_SERVO, "Starting servo task...");
+  servo_init();
+  vTaskDelay(pdMS_TO_TICKS(5000));
+  while (1) {
+    for (int angle = 0; angle <= 180; angle += 10) {
+      servo_set_angle(angle);
+      vTaskDelay(pdMS_TO_TICKS(300));
+    }
+
+    for (int angle = 180; angle >= 0; angle -= 10) {
+      servo_set_angle(angle);
+      vTaskDelay(pdMS_TO_TICKS(300));
+    }
+  }
 }

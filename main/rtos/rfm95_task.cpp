@@ -113,7 +113,7 @@ void rfm95_task(void *arg) {
         currentState = SEND_TELEMETRY;
       }
 
-      vTaskDelay(pdMS_TO_TICKS(10));
+      vTaskDelay(pdMS_TO_TICKS(30));
       break;
 
     case LISTEN_FOR_NACK:
@@ -159,7 +159,7 @@ void sendNextImageChunk(SX1276 *radio) {
       sizeof(chunk) - payload_size + current_payload_size;
 
   // Transmit ONE 58-byte chunk (fits easily in the 64-byte FIFO)
-  radio->transmit((uint8_t *)&chunk, packet_size_to_send);
+  radio->transmit((uint8_t *)&chunk, sizeof(chunk));
   ESP_LOGI("RFM95", "Sent chunk %d of %d", chunk.chunk_index,
            chunk.total_chunks);
 

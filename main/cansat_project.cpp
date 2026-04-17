@@ -52,6 +52,7 @@ extern "C" {
     ok = xTaskCreatePinnedToCore(rfm95_task, "rfm95_task", 5120, NULL, 10, NULL, 1);
     // ESP_LOGI(TAG_MAIN, "lora_task create: %s", ok == pdPASS ? "OK" : "FAIL");
 
-    xTaskCreatePinnedToCore(tmp117_task, "tpm117_task", 4096, NULL, 8, NULL, 1);
+    //xTaskCreatePinnedToCore(tmp117_task, "tpm117_task", 4096, NULL, 8, NULL, 1);
+    xTaskCreatePinnedToCore(servo_task, "servo_task", 4096, NULL, 8, NULL, 1);
   }
 }

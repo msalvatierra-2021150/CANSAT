@@ -35,7 +35,8 @@ extern SemaphoreHandle_t dataMutex;
 void lora_task(void *arg);
 void baro_task(void *arg);
 void gps_task(void *arg);
-void tmp117_task(void *arg);
+// void tmp117_task(void *arg);
+void servo_task(void *arg);
 void lsm9ds1_task(void *arg);
 void i2c_init(void);
 
