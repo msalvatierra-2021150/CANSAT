@@ -22,6 +22,8 @@
 // default I2C addr if none provided
 #define DPS310_ADDR_DEFAULT 0x77
 
+static bool first_reading = true;
+
 // ---------- I2C helpers ----------
 static esp_err_t wr8(dps310_t *dev, uint8_t reg, uint8_t val) {
   if (dev == NULL || dev->i2c_dev == NULL) {
@@ -255,32 +257,69 @@ static esp_err_t read_raw_tp(dps310_t *dev, int32_t *raw_t, int32_t *raw_p) {
   return ESP_OK;
 }
 
-esp_err_t dps310_read(dps310_t *dev, float *temperature_c,
-                      float *pressure_hpa) {
+#include "esp_timer.h"
+#include <math.h>
+
+esp_err_t dps310_read(dps310_t *dev, float *temperature_c, float *pressure_hpa,
+                      float *velocity_mps) {
+  static float last_alt_m = 0.0f;
+  static int64_t last_time_us = 0;
+  static bool first_reading = true;
+
   if (dev == NULL || dev->i2c_dev == NULL) {
     return ESP_ERR_INVALID_STATE;
   }
 
-  // Wait for both TMP_RDY (bit5) and PRS_RDY (bit4) up to ~200 ms
   ESP_RETURN_ON_ERROR(wait_bits(dev, 0x30, 0x30, 200), TAG, "data not ready");
 
-  int32_t raw_t = 0, raw_p = 0;
+  int32_t raw_t = 0;
+  int32_t raw_p = 0;
+
   ESP_RETURN_ON_ERROR(read_raw_tp(dev, &raw_t, &raw_p), TAG, "raw rd");
-  ESP_LOGD(TAG, "raw T=%ld raw P=%ld", (long)raw_t, (long)raw_p);
 
   float tr = (float)raw_t / (float)dev->kT;
   float pr = (float)raw_p / (float)dev->kP;
 
   float T = dev->c0 * 0.5f + dev->c1 * tr;
-  float p = dev->c00 + pr * (dev->c10 + pr * (dev->c20 + pr * dev->c30)) +
-            tr * (dev->c01 + pr * (dev->c11 + pr * dev->c21));
+
+  float p_pa = dev->c00 + pr * (dev->c10 + pr * (dev->c20 + pr * dev->c30)) +
+               tr * (dev->c01 + pr * (dev->c11 + pr * dev->c21));
+
+  float p_hpa = p_pa / 100.0f;
 
   if (temperature_c) {
     *temperature_c = T;
   }
+
   if (pressure_hpa) {
-    *pressure_hpa = p / 100.0f; // Pa -> hPa
+    *pressure_hpa = p_hpa;
   }
+
+  if (p_hpa <= 0.0f) {
+    return ESP_ERR_INVALID_RESPONSE;
+  }
+
+  float alt_m = 44330.0f * (1.0f - powf(p_hpa / 1013.25f, 0.1903f));
+
+  int64_t now_us = esp_timer_get_time();
+
+  if (velocity_mps) {
+    if (!first_reading) {
+      float dt = (now_us - last_time_us) / 1000000.0f; // seconds
+
+      if (dt > 0.0f) {
+        *velocity_mps = (alt_m - last_alt_m) / dt; // m/s
+      } else {
+        *velocity_mps = 0.0f;
+      }
+    } else {
+      *velocity_mps = 0.0f;
+      first_reading = false;
+    }
+  }
+
+  last_alt_m = alt_m;
+  last_time_us = now_us;
 
   return ESP_OK;
 }

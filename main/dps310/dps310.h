@@ -61,7 +61,8 @@ esp_err_t dps310_init(dps310_t *dev);
 esp_err_t dps310_config(dps310_t *dev, dps310_rate_t rate_t, dps310_osr_t osr_t,
                         dps310_rate_t rate_p, dps310_osr_t osr_p,
                         dps310_mode_t mode);
-esp_err_t dps310_read(dps310_t *dev, float *temperature_c, float *pressure_hpa);
+esp_err_t dps310_read(dps310_t *dev, float *temperature_c, float *pressure_hpa,
+                      float *velocity_mps);
 
 #ifdef __cplusplus
 }

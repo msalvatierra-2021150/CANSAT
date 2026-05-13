@@ -85,15 +85,14 @@ void app_main(void) {
   ESP_ERROR_CHECK(uart_driver_install(UART_NUM_0, 4096, 0, 0, NULL, 0));
 
   // Camera task first
-  xTaskCreatePinnedToCore(camera_task, "camera_task", 32768, (void *)cam, 5,
-                          NULL, 1);
+  // xTaskCreatePinnedToCore(camera_task, "camera_task", 32768, (void *)cam, 5,
+  //                         NULL, 1);
 
   // Other tasks
-  xTaskCreatePinnedToCore(gps_task, "gps_task", 4096, NULL, 5, NULL, 1);
   xTaskCreatePinnedToCore(lsm9ds1_task, "lsm9ds1_task", 4096, NULL, 8, NULL, 1);
   xTaskCreatePinnedToCore(baro_task, "baro_task", 4096, NULL, 4, NULL, 1);
   xTaskCreatePinnedToCore(rfm95_task, "rfm95_task", 5120, NULL, 10, NULL, 1);
-  xTaskCreatePinnedToCore(servo_task, "servo_task", 4096, NULL, 8, NULL, 1);
+
 }
 
 } // extern "C"
